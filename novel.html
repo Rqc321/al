@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说阅读 - 协作小说创作平台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        dark: {
+                            bg: '#111827',
+                            card: '#1F2937',
+                            text: '#F3F4F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Georgia', 'Cambria', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-smooth {
+                transition: all 0.3s ease;
+            }
+            .reading-content p {
+                margin-bottom: 1em;
+                line-height: 1.8;
+            }
+            .reading-content h1,
+            .reading-content h2,
+            .reading-content h3 {
+                margin-top: 1.5em;
+                margin-bottom: 0.5em;
+                font-weight: bold;
+            }
+            .reading-content h1 {
+                font-size: 1.8em;
+            }
+            .reading-content h2 {
+                font-size: 1.5em;
+            }
+            .reading-content h3 {
+                font-size: 1.3em;
+            }
+            .toc-item {
+                transition: all 0.2s ease;
+            }
+            .toc-item:hover {
+                background-color: rgba(59, 130, 246, 0.1);
+                transform: translateX(4px);
+            }
+            .toc-item.active {
+                background-color: rgba(59, 130, 246, 0.2);
+                font-weight: 600;
+                color: #3B82F6;
+                border-left: 3px solid #3B82F6;
+            }
+        }
+    </style>
+    <style>
+        /* 全局样式 */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 阅读模式样式 */
+        .font-size-small .reading-content {
+            font-size: 16px;
+        }
+        .font-size-medium .reading-content {
+            font-size: 18px;
+        }
+        .font-size-large .reading-content {
+            font-size: 20px;
+        }
+        .line-spacing-small .reading-content p {
+            line-height: 1.6;
+        }
+        .line-spacing-medium .reading-content p {
+            line-height: 1.8;
+        }
+        .line-spacing-large .reading-content p {
+            line-height: 2.1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 transition-smooth font-size-medium line-spacing-medium">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white dark:bg-dark-bg shadow-md transition-smooth">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="index.html" class="flex items-center">
+                    <i class="fa fa-book text-2xl text-primary"></i>
+                    <h1 class="text-xl font-bold text-primary">协作小说创作平台</h1>
+                </a>
+            </div>
+            
+            <!-- 导航链接 - 桌面端 -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="index.html" class="font-medium hover:text-primary transition-smooth">全部小说</a>
+                <a href="index.html?sort=newest" class="font-medium hover:text-primary transition-smooth">最新更新</a>
+                <a href="create.html" class="flex items-center bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-smooth">
+                    <i class="fa fa-plus mr-2"></i>
+                    <span>创建新小说</span>
+                </a>
+            </nav>
+            
+            <!-- 移动端菜单按钮 -->
+            <div class="md:hidden flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fa fa-moon-o text-lg"></i>
+                </button>
+                <button id="mobileMenuBtn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fa fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-gray-700">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex flex-col space-y-3 pb-3">
+                    <a href="index.html" class="py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">全部小说</a>
+                    <a href="index.html?sort=newest" class="py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">最新更新</a>
+                    <a href="create.html" class="flex items-center justify-center bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
+                        <i class="fa fa-plus mr-2"></i>
+                        <span>创建新小说</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="flex-grow">
+        <!-- 小说基本信息 -->
+        <div class="bg-white dark:bg-dark-bg shadow-sm py-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 id="novelTitle" class="text-2xl md:text-3xl font-bold mb-2">异世界冒险记</h2>
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                            <span><i class="fa fa-calendar-o mr-1"></i> 创建于：2024-01-01</span>
+                            <span><i class="fa fa-clock-o mr-1"></i> 最后更新：2024-01-15 14:30</span>
+                            <span><i class="fa fa-file-text-o mr-1"></i> 章节数：5</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <a href="edit.html?novelId=1&chapterId=1" class="inline-flex items-center bg-primary hover:bg-blue-600 text-white px-5 py-2 rounded-lg transition-smooth">
+                            <i class="fa fa-pencil mr-2"></i>
+                            <span>编辑本章</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容阅读区域 -->
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- 左侧目录 - 桌面端 -->
+                <aside id="chapterListDesktop" class="hidden lg:block w-64 flex-shrink-0">
+                    <div class="bg-white dark:bg-dark-card rounded-xl shadow-md p-4 sticky top-24">
+                        <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="font-bold text-lg">章节列表</h3>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">共 5 章</span>
+                        </div>
+                        <div class="max-h-[calc(100vh-240px)] overflow-y-auto pr-2 space-y-1">
+                            <a href="novel.html?id=1&chapter=1" class="toc-item active block px-3 py-2 rounded-lg text-sm">第一章 穿越异世界</a>
+                            <a href="novel.html?id=1&chapter=2" class="toc-item block px-3 py-2 rounded-lg text-sm">第二章 初遇伙伴</a>
+                            <a href="novel.html?id=1&chapter=3" class="toc-item block px-3 py-2 rounded-lg text-sm">第三章 神秘力量</a>
+                            <a href="novel.html?id=1&chapter=4" class="toc-item block px-3 py-2 rounded-lg text-sm">第四章 危险降临</a>
+                            <a href="novel.html?id=1&chapter=5" class="toc-item block px-3 py-2 rounded-lg text-sm">第五章 森林奇遇</a>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- 中间阅读区域 -->
+                <div class="flex-grow max-w-3xl mx-auto lg:mx-0">
+                    <!-- 移动端目录切换按钮 -->
+                    <div class="lg:hidden mb-4">
+                        <button id="toggleChapterList" class="w-full flex items-center justify-between bg-white dark:bg-dark-card p-3 rounded-lg shadow-sm">
+                            <span class="font-medium">章节列表</span>
+                            <i class="fa fa-chevron-down text-gray-500"></i>
+                        </button>
+                        <!-- 移动端目录 -->
+                        <div id="chapterListMobile" class="hidden mt-2 bg-white dark:bg-dark-card rounded-lg shadow-md p-2 max-h-80 overflow-y-auto">
+                            <a href="novel.html?id=1&chapter=1" class="toc-item active block px-3 py-2 rounded-lg text-sm">第一章 穿越异世界</a>
+                            <a href="novel.html?id=1&chapter=2" class="toc-item block px-3 py-2 rounded-lg text-sm">第二章 初遇伙伴</a>
+                            <a href="novel.html?id=1&chapter=3" class="toc-item block px-3 py-2 rounded-lg text-sm">第三章 神秘力量</a>
+                            <a href="novel.html?id=1&chapter=4" class="toc-item block px-3 py-2 rounded-lg text-sm">第四章 危险降临</a>
+                            <a href="novel.html?id=1&chapter=5" class="toc-item block px-3 py-2 rounded-lg text-sm">第五章 森林奇遇</a>
+                        </div>
+                    </div>
+
+                    <!-- 小说章节内容 -->
+                    <article class="bg-white dark:bg-dark-card rounded-xl shadow-md p-6 md:p-8 mb-6">
+                        <h3 class="text-xl md:text-2xl font-bold mb-6 text-center">第一章 穿越异世界</h3>
+                        <div id="chapterContent" class="reading-content dark:text-dark-text">
+                            <p>李阳睁开眼睛，发现自己躺在一片陌生的森林中。阳光透过茂密的树叶洒在他身上，周围是从未见过的奇花异草。</p>
+                            <p>"这是哪里？"他疑惑地自言自语，努力回忆着之前发生的事情。</p>
+                            <p>昨天晚上，他还在自己的房间里熬夜玩游戏，突然电脑屏幕发出一道强光，然后他就失去了意识。现在看来，他似乎穿越到了一个完全不同的世界。</p>
+                            <p>李阳站起身来，拍了拍身上的灰尘，开始观察周围的环境。森林里充满了生机，鸟儿在枝头歌唱，小动物在草丛中穿梭。空气中弥漫着一种清新而神秘的气息。</p>
+                            <p>就在他准备探索更深的地方时，远处传来了一阵嘈杂声。他小心地躲到一棵树后，看到一群穿着奇装异服的人正朝这边走来。</p>
+                            <p>这些人看起来像是中世纪的战士，他们拿着武器，表情严肃。为首的是一个身材高大的男子，他有着金色的头发和锐利的蓝色眼睛。</p>
+                            <p>"我们必须尽快找到那个传送门，否则就来不及了。"为首的男子说道。</p>
+                            <p>传送门？李阳心中一动，这可能与他穿越到这里有关。他决定悄悄跟随这些人，看看能否找到回去的方法。</p>
+                            <p>随着队伍的深入，森林变得越来越茂密，光线也越来越暗。李阳小心翼翼地保持着距离，以免被发现。</p>
+                            <p>突然，队伍停了下来。为首的男子举起手，示意大家安静。李阳也赶紧躲到一棵大树后面，屏住呼吸。</p>
+                            <p>前方的灌木丛中传来了沙沙声，接着一只巨大的野兽出现在大家面前。这是一只长着三只眼睛的狼，浑身散发着黑色的雾气。</p>
+                            <p>"是暗影狼！大家小心！"为首的男子大声警告道。</p>
+                            <p>战士们纷纷举起武器，准备战斗。李阳从未见过如此恐怖的生物，他感到双腿发软，几乎站不稳。</p>
+                            <p>暗影狼发出一声低沉的吼叫，然后朝队伍冲了过来。战斗一触即发...</p>
+                        </div>
+                    </article>
+
+                    <!-- 章节导航 -->
+                    <div class="flex justify-between items-center">
+                        <a href="novel.html?id=1&chapter=1" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-smooth flex items-center opacity-50 cursor-not-allowed">
+                            <i class="fa fa-chevron-left mr-2"></i>
+                            <span>上一章</span>
+                        </a>
+                        <a href="novel.html?id=1&chapter=2" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-smooth flex items-center">
+                            <span>下一章</span>
+                            <i class="fa fa-chevron-right ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 右侧工具栏 - 桌面端 -->
+                <aside class="hidden lg:block w-64 flex-shrink-0">
+                    <div class="bg-white dark:bg-dark-card rounded-xl shadow-md p-4 sticky top-24">
+                        <!-- 阅读设置 -->
+                        <div class="mb-6">
+                            <h3 class="font-bold mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">阅读设置</h3>
+                            
+                            <!-- 字体大小 -->
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">字体大小</p>
+                                <div class="flex items-center space-x-2">
+                                    <button id="fontSizeSmall" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">小</button>
+                                    <button id="fontSizeMedium" class="px-3 py-1 text-sm bg-primary text-white border border-primary rounded">中</button>
+                                    <button id="fontSizeLarge" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">大</button>
+                                </div>
+                            </div>
+
+                            <!-- 行间距 -->
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">行间距</p>
+                                <div class="flex items-center space-x-2">
+                                    <button id="lineSpacingSmall" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">小</button>
+                                    <button id="lineSpacingMedium" class="px-3 py-1 text-sm bg-primary text-white border border-primary rounded">中</button>
+                                    <button id="lineSpacingLarge" class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">大</button>
+                                </div>
+                            </div>
+
+                            <!-- 主题切换 -->
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">阅读主题</p>
+                                <div class="flex items-center space-x-2">
+                                    <button id="themeLight" class="w-6 h-6 rounded-full bg-white border border-gray-300 shadow-sm"></button>
+                                    <button id="themeSepia" class="w-6 h-6 rounded-full bg-amber-100 border border-amber-300"></button>
+                                    <button id="themeDark" class="w-6 h-6 rounded-full bg-gray-800 border border-gray-700"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 小说简介 -->
+                        <div>
+                            <h3 class="font-bold mb-3 pb-2 border-b border-gray-200 dark:border-gray-700">小说简介</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-6">
+                                一个普通高中生意外穿越到异世界，展开一段惊险刺激的冒险旅程，结交伙伴，对抗邪恶势力。在这个充满魔法和神秘力量的世界里，李阳将如何找到回家的路，又会有怎样的奇遇等待着他？
+                            </p>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部工具栏 - 移动端 -->
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-gray-700 py-3 px-4 shadow-lg z-40">
+        <div class="flex justify-between items-center">
+            <button id="mobileReadSettings" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                <i class="fa fa-sliders text-lg"></i>
+            </button>
+            <a href="edit.html?novelId=1&chapterId=1" class="flex items-center bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-smooth">
+                <i class="fa fa-pencil mr-2"></i>
+                <span>编辑</span>
+            </a>
+            <button id="mobileDarkMode" class="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                <i class="fa fa-moon-o text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 阅读设置弹窗 - 移动端 -->
+    <div id="readSettingsModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-dark-card rounded-xl p-6 w-[90%] max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">阅读设置</h3>
+                <button id="closeSettingsModal" class="p-1 text-gray-500">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 设置内容 -->
+            <div class="space-y-6">
+                <!-- 字体大小 -->
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">字体大小</p>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">小</button>
+                        <button class="px-4 py-2 text-sm bg-primary text-white border border-primary rounded">中</button>
+                        <button class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">大</button>
+                    </div>
+                </div>
+
+                <!-- 行间距 -->
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">行间距</p>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">小</button>
+                        <button class="px-4 py-2 text-sm bg-primary text-white border border-primary rounded">中</button>
+                        <button class="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">大</button>
+                    </div>
+                </div>
+
+                <!-- 阅读主题 -->
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">阅读主题</p>
+                    <div class="flex items-center space-x-3">
+                        <button class="w-8 h-8 rounded-full bg-white border border-gray-300 shadow-sm"></button>
+                        <button class="w-8 h-8 rounded-full bg-amber-100 border border-amber-300"></button>
+                        <button class="w-8 h-8 rounded-full bg-gray-800 border border-gray-700"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-gray-700 py-6 mt-12 lg:mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-book text-xl text-primary"></i>
+                        <span class="font-bold text-lg">协作小说创作平台</span>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">无门槛、公开协作的创作空间</p>
+                </div>
+                <div class="flex flex-col items-center md:items-end">
+                    <div class="flex space-x-4 mb-2">
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-github text-xl"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-twitter text-xl"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-envelope text-xl"></i></a>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">© 2024 协作小说创作平台. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 交互脚本 -->
+    <script src="js/common.js"></script>
+    <script src="js/novel.js"></script>
+</body>
+</html>

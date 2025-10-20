@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>协作小说创作平台 - 公开创作空间</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 自定义 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        dark: {
+                            bg: '#111827',
+                            card: '#1F2937',
+                            text: '#F3F4F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Georgia', 'Cambria', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-smooth {
+                transition: all 0.3s ease;
+            }
+        }
+    </style>
+    <style>
+        /* 全局样式 */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 transition-smooth">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white dark:bg-dark-bg shadow-md transition-smooth">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-book text-2xl text-primary"></i>
+                <h1 class="text-xl font-bold text-primary">协作小说创作平台</h1>
+            </div>
+            
+            <!-- 导航链接 - 桌面端 -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="index.html" class="font-medium hover:text-primary transition-smooth">全部小说</a>
+                <a href="index.html?sort=newest" class="font-medium hover:text-primary transition-smooth">最新更新</a>
+                <a href="create.html" class="flex items-center bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-smooth">
+                    <i class="fa fa-plus mr-2"></i>
+                    <span>创建新小说</span>
+                </a>
+            </nav>
+            
+            <!-- 搜索框 -->
+            <div class="hidden md:flex items-center ml-4">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        placeholder="搜索小说..." 
+                        id="searchInput"
+                        class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-dark-card dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                    <i class="fa fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </div>
+            
+            <!-- 移动端菜单按钮 -->
+            <div class="md:hidden flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fa fa-moon-o text-lg"></i>
+                </button>
+                <button id="mobileMenuBtn" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
+                    <i class="fa fa-bars text-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 移动端菜单 -->
+        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-gray-700">
+            <div class="container mx-auto px-4 py-3">
+                <div class="mb-4">
+                    <input 
+                        type="text" 
+                        placeholder="搜索小说..." 
+                        class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-dark-card dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                    <i class="fa fa-search absolute left-7 top-[6.5rem] transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <div class="flex flex-col space-y-3 pb-3">
+                    <a href="index.html" class="py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">全部小说</a>
+                    <a href="index.html?sort=newest" class="py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">最新更新</a>
+                    <a href="create.html" class="flex items-center justify-center bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
+                        <i class="fa fa-plus mr-2"></i>
+                        <span>创建新小说</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold mb-2">公开协作小说创作空间</h2>
+            <p class="text-gray-600 dark:text-gray-400">无需注册，自由创作，共同协作完成精彩故事</p>
+        </div>
+
+        <!-- 排序选项 -->
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold">热门小说</h3>
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-500 dark:text-gray-400">排序：</span>
+                <select id="sortSelect" class="px-3 py-1 border border-gray-300 dark:border-gray-600 dark:bg-dark-card dark:text-dark-text rounded-md focus:outline-none">
+                    <option value="latest">最新更新</option>
+                    <option value="created">创建时间</option>
+                    <option value="popular">热门程度</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 小说列表 -->
+        <div id="novelList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 小说卡片示例 - 实际数据将通过JavaScript动态生成 -->
+            <div class="bg-white dark:bg-dark-card rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-2 line-clamp-1">异世界冒险记</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">一个普通高中生意外穿越到异世界，展开一段惊险刺激的冒险旅程，结交伙伴，对抗邪恶势力...</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                        <span>最新章节：第五章 森林奇遇</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">最后更新：2024-01-15 14:30</span>
+                            <a href="novel.html?id=1" class="text-primary hover:text-blue-600 font-medium">阅读</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-dark-card rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-2 line-clamp-1">都市异能传说</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">平凡的都市白领突然获得了特殊能力，他将如何运用这些能力改变自己的生活，又会面临怎样的挑战...</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                        <span>最新章节：第三章 能力觉醒</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">最后更新：2024-01-14 18:45</span>
+                            <a href="novel.html?id=2" class="text-primary hover:text-blue-600 font-medium">阅读</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-dark-card rounded-xl shadow-md overflow-hidden card-hover">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold mb-2 line-clamp-1">星际殖民时代</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">人类开始向宇宙扩张，在遥远的星球上建立殖民地，探索未知的宇宙奥秘，同时也要面对来自外星文明的威胁...</p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                        <span>最新章节：第二章 启航</span>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">最后更新：2024-01-13 09:15</span>
+                            <a href="novel.html?id=3" class="text-primary hover:text-blue-600 font-medium">阅读</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载更多 -->
+        <div class="mt-10 text-center">
+            <button id="loadMoreBtn" class="px-6 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg transition-smooth">
+                加载更多
+            </button>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-gray-700 py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa fa-book text-xl text-primary"></i>
+                        <span class="font-bold text-lg">协作小说创作平台</span>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">无门槛、公开协作的创作空间</p>
+                </div>
+                <div class="flex flex-col items-center md:items-end">
+                    <div class="flex space-x-4 mb-2">
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-github text-xl"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-twitter text-xl"></i></a>
+                        <a href="#" class="text-gray-500 hover:text-primary transition-smooth"><i class="fa fa-envelope text-xl"></i></a>
+                    </div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">© 2024 协作小说创作平台. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 交互脚本 -->
+    <script src="js/common.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>

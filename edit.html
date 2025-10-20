@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说编辑 - 协作小说创作平台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Quill 富文本编辑器 -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <!-- 自定义 Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        dark: {
+                            bg: '#111827',
+                            card: '#1F2937',
+                            text: '#F3F4F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Georgia', 'Cambria', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .transition-smooth {
+                transition: all 0.3s ease;
+            }
+            .editor-focused {
+                border-color: #3B82F6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            .chapter-item {
+                transition: all 0.2s ease;
+            }
+            .chapter-item:hover {
+                background-color: rgba(59, 130, 246, 0.1);
+            }
+            .chapter-item.active {
+                background-color: rgba(59, 130, 246, 0.2);
+                font-weight: 600;
+                color: #3B82F6;
+                border-left: 3px solid #3B82F6;
+            }
+            .quill-toolbar {
+                background-color: #f9fafb;
+                border-bottom: 1px solid #e5e7eb;
+            }
+            .quill-editor {
+                min-height: 400px;
+            }
+        }
+    </style>
+    <style>
+        /* 全局样式 */
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Quill 编辑器深色模式 */
+        .dark .ql-toolbar.ql-snow {
+            background-color: #1F2937;
+            border-color: #374151;
+        }
+        .dark .ql-toolbar.ql-snow .ql-stroke {
+            stroke: #9CA3AF;
+        }
+        .dark .ql-toolbar.ql-snow .ql-fill,
+        .dark .ql-toolbar.ql-snow .ql-stroke.ql-fill {
+            fill: #9CA3AF;
+        }
+        .dark .ql-toolbar.ql-snow .ql-picker {
+            color: #E5E7EB;
+        }
+        .dark .ql-toolbar.ql-snow .ql-picker-options {
+            background-color: #1F2937;
+            border-color: #374151;
+        }
+        .dark .ql-editor {
+            color: #F3F4F6;
+        }
+        .dark .ql-editor.ql-blank::before {
+            color: #6B7280;
+        }
+        /* 保存状态提示动画 */
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+        .saving {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 transition-smooth">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-50 bg-white dark:bg-dark-bg shadow-md transition-smooth">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <a href="index.html" class="flex items-center">
+                    <i class="fa fa-book text-2xl text-primary"></i>
+                    <h1 class="text-xl font-bold text-primary">协作小说创作平台</h1>
+                </a>
+            </div>
+            
+            <!-- 编辑状态信息 -->
+            <div class="hidden md:flex items-center space-x-6">
+                <div class="flex items-center">
+                    <span class="text-sm mr-2">当前小说：</span>
+                    <span class="font-medium" id="currentNovelName">异世界冒险记</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-sm mr-2">当前章节：</span>
+                    <span class="font-medium" id="currentChapterName">第一章 穿越异世界</span>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="flex items-center space-x-3">
+                <button id="versionHistoryBtn" class="flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-smooth text-sm">
+                    <i class="fa fa-history mr-1.5"></i>
+                    <span>版本历史</span>
+                </button>
+                <a href="novel.html?id=1&chapter=1" id="exitEditBtn" class="flex items-center px-4 py-1.5 border border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-smooth text-sm">
+                    <i class="fa fa-sign-out mr-1.5"></i>
+                    <span>退出编辑</span>
+                </a>
+                <button id="saveBtn" class="flex items-center px-5 py-1.5 bg-primary hover:bg-blue-600 text-white rounded-lg transition-smooth text-sm">
+                    <i class="fa fa-save mr-1.5"></i>
+                    <span>保存更改</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="flex-grow flex overflow-hidden">
+        <!-- 左侧章节列表 -->
+        <aside class="w-64 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-bg flex-shrink-0 overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="font-bold text-lg">章节管理</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">点击章节切换编辑内容</p>
+            </div>
+            
+            <!-- 章节操作 -->
+            <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <button id="addChapterBtn" class="flex items-center px-3 py-1.5 bg-primary hover:bg-blue-600 text-white rounded-lg transition-smooth text-sm">
+                        <i class="fa fa-plus mr-1.5"></i>
+                        <span>新增章节</span>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <button id="moveChapterUpBtn" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa fa-arrow-up"></i>
+                    </button>
+                    <button id="moveChapterDownBtn" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth">
+                        <i class="fa fa-arrow-down"></i>
+                    </button>
+                    <button id="deleteChapterBtn" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                    <button id="renameChapterBtn" class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth">
+                        <i class="fa fa-pencil"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 章节列表 -->
+            <div id="chapterList" class="flex-grow overflow-y-auto p-1 space-y-1">
+                <div class="chapter-item active px-3 py-2 rounded-lg cursor-pointer text-sm flex items-center justify-between">
+                    <span>第一章 穿越异世界</span>
+                    <span class="text-xs text-gray-500">2.1k字</span>
+                </div>
+                <div class="chapter-item px-3 py-2 rounded-lg cursor-pointer text-sm flex items-center justify-between">
+                    <span>第二章 初遇伙伴</span>
+                    <span class="text-xs text-gray-500">1.8k字</span>
+                </div>
+                <div class="chapter-item px-3 py-2 rounded-lg cursor-pointer text-sm flex items-center justify-between">
+                    <span>第三章 神秘力量</span>
+                    <span class="text-xs text-gray-500">2.3k字</span>
+                </div>
+                <div class="chapter-item px-3 py-2 rounded-lg cursor-pointer text-sm flex items-center justify-between">
+                    <span>第四章 危险降临</span>
+                    <span class="text-xs text-gray-500">1.9k字</span>
+                </div>
+                <div class="chapter-item px-3 py-2 rounded-lg cursor-pointer text-sm flex items-center justify-between">
+                    <span>第五章 森林奇遇</span>
+                    <span class="text-xs text-gray-500">2.5k字</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧编辑区域 -->
+        <div class="flex-grow overflow-y-auto bg-gray-50 dark:bg-dark-bg">
+            <div class="max-w-3xl mx-auto p-6">
+                <!-- 编辑状态提示 -->
+                <div class="mb-4 flex items-center justify-between">
+                    <div id="editStatus" class="flex items-center text-sm">
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                        <span>自动保存已启用</span>
+                    </div>
+                    <div id="lastSaved" class="text-sm text-gray-500">
+                        最后保存：刚刚
+                    </div>
+                </div>
+
+                <!-- 编辑器工具栏 -->
+                <div id="toolbar" class="quill-toolbar rounded-t-lg border border-gray-300 dark:border-gray-600 border-b-0">
+                    <div class="ql-toolbar ql-snow">
+                        <span class="ql-formats">
+                            <select class="ql-header">
+                                <option value="1">标题 1</option>
+                                <option value="2">标题 2</option>
+                                <option value="3">标题 3</option>
+                                <option selected>正文</option>
+                            </select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold"></button>
+                            <button class="ql-italic"></button>
+                            <button class="ql-underline"></button>
+                            <button class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-color"></select>
+                            <select class="ql-background"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-list" value="ordered"></button>
+                            <button class="ql-list" value="bullet"></button>
+                            <button class="ql-indent" value="-1"></button>
+                            <button class="ql-indent" value="+1"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-blockquote"></button>
+                            <button class="ql-code-block"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-link"></button>
+                            <button class="ql-image"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-clean"></button>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 编辑器内容区域 -->
+                <div id="editor" class="quill-editor bg-white dark:bg-dark-card rounded-b-lg border border-gray-300 dark:border-gray-600 min-h-[60vh]">
+                    <div class="ql-editor" contenteditable="true">
+                        <p>李阳睁开眼睛，发现自己躺在一片陌生的森林中。阳光透过茂密的树叶洒在他身上，周围是从未见过的奇花异草。</p>
+                        <p>"这是哪里？"他疑惑地自言自语，努力回忆着之前发生的事情。</p>
+                        <p>昨天晚上，他还在自己的房间里熬夜玩游戏，突然电脑屏幕发出一道强光，然后他就失去了意识。现在看来，他似乎穿越到了一个完全不同的世界。</p>
+                        <p>李阳站起身来，拍了拍身上的灰尘，开始观察周围的环境。森林里充满了生机，鸟儿在枝头歌唱，小动物在草丛中穿梭。空气中弥漫着一种清新而神秘的气息。</p>
+                        <p>就在他准备探索更深的地方时，远处传来了一阵嘈杂声。他小心地躲到一棵树后，看到一群穿着奇装异服的人正朝这边走来。</p>
+                        <p>这些人看起来像是中世纪的战士，他们拿着武器，表情严肃。为首的是一个身材高大的男子，他有着金色的头发和锐利的蓝色眼睛。</p>
+                        <p>"我们必须尽快找到那个传送门，否则就来不及了。"为首的男子说道。</p>
+                        <p>传送门？李阳心中一动，这可能与他穿越到这里有关。他决定悄悄跟随这些人，看看能否找到回去的方法。</p>
+                    </div>
+                </div>
+
+                <!-- 字数统计 -->
+                <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+                    <div id="wordCount">字数统计：约 800 字</div>
+                    <div id="collaborators">当前在线编辑：1 人</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 底部状态栏 -->
+    <footer class="bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-gray-700 py-2 px-4">
+        <div class="container mx-auto flex justify-between items-center text-sm text-gray-500">
+            <div class="flex items-center space-x-4">
+                <div id="saveIndicator" class="flex items-center">
+                    <i class="fa fa-check-circle text-green-500 mr-1.5"></i>
+                    <span>已保存</span>
+                </div>
+                <div class="hidden md:flex items-center">
+                    <i class="fa fa-info-circle mr-1.5"></i>
+                    <span>内容将实时保存，所有用户可见</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button id="toggleDarkMode" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth">
+                    <i class="fa fa-moon-o"></i>
+                </button>
+                <button id="helpBtn" class="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-smooth">
+                    <i class="fa fa-question-circle"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 版本历史弹窗 -->
+    <div id="versionHistoryModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-dark-card rounded-xl w-[90%] max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="font-bold text-lg">版本历史</h3>
+                <button id="closeVersionModal" class="p-1 text-gray-500">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- 版本列表 -->
+            <div class="flex-grow overflow-y-auto p-4">
+                <div class="space-y-4">
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-smooth">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">版本 #123</span>
+                            <span class="text-sm text-gray-500">2分钟前</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">修改了章节开头部分，增加了环境描写</p>
+                        <div class="flex justify-end space-x-3">
+                            <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                                查看差异
+                            </button>
+                            <button class="px-3 py-1 text-sm bg-primary text-white rounded hover:bg-blue-600">
+                                恢复此版本
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-smooth">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">版本 #122</span>
+                            <span class="text-sm text-gray-500">15分钟前</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">添加了新段落，描述主角的心理活动</p>
+                        <div class="flex justify-end space-x-3">
+                            <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                                查看差异
+                            </button>
+                            <button class="px-3 py-1 text-sm bg-primary text-white rounded hover:bg-blue-600">
+                                恢复此版本
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-smooth">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">版本 #121</span>
+                            <span class="text-sm text-gray-500">1小时前</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">修改了对话内容，使情节更加紧凑</p>
+                        <div class="flex justify-end space-x-3">
+                            <button class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                                查看差异
+                            </button>
+                            <button class="px-3 py-1 text-sm bg-primary text-white rounded hover:bg-blue-600">
+                                恢复此版本
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部按钮 -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                <button id="closeVersionHistoryBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增章节弹窗 -->
+    <div id="addChapterModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+        <div class="bg-white dark:bg-dark-card rounded-xl p-6 w-[90%] max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg">新增章节</h3>
+                <button id="closeAddChapterModal" class="p-1 text-gray-500">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="addChapterForm" class="space-y-4">
+                <div>
+                    <label for="chapterTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        章节标题 <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        id="chapterTitle" 
+                        name="chapterTitle" 
+                        placeholder="请输入章节标题" 
+                        required
+                        maxlength="100"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-dark-bg dark:text-dark-text focus:outline-none"
+                    >
+                </div>
+                
+                <div>
+                    <label for="chapterPosition" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        插入位置
+                    </label>
+                    <select 
+                        id="chapterPosition" 
+                        name="chapterPosition"
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-dark-bg dark:text-dark-text focus:outline-none"
+                    >
+                        <option value="after">当前章节之后</option>
+                        <option value="before">当前章节之前</option>
+                        <option value="end">所有章节之后</option>
+                    </select>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" id="cancelAddChapterBtn" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        取消
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600">
+                        创建章节
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 交互脚本 -->
+    <script src="js/common.js"></script>
+    <script src="js/edit.js"></script>
+</body>
+</html>
